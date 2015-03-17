@@ -1,10 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
-module Rest.Service
-    ( module Web.Scotty
-    , module Web.Scotty.Trans
-    , runService
-    ) where
+module Rest.Service (Name, runService) where
 
 import Data.Text.Internal.Lazy (Text)
 import Network.Wai.Handler.Warp (Port)
@@ -13,8 +9,11 @@ import Web.Scotty
 import Web.Scotty.Trans (ActionT)
 import Rest.Types
 
-runService :: Parsable a => Port -> (a -> ActionT Text IO ()) -> IO ()
-runService port f = scotty port $ do
+type Name = String
+
+runService :: Parsable a => Port -> Name -> (a -> ActionT Text IO ()) -> IO ()
+runService port name f = scotty port $ do
     middleware simpleCors
-    get (capture "/:resource") $ param "resource" >>= f
-    notFound                   $ json $ Error 400 "Service Not Found" Nothing
+    get (capture resource) $ param "resource" >>= f
+    notFound               $ json $ Error 400 "Service Not Found" Nothing
+    where resource = "/" ++ name ++ "/:resource"
